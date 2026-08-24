@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BRICS InfraPulse AI — Interactive Video Presentation & Voiceover Walkthrough</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎬</text></svg>">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-dark: #040711;
+      --bg-surface: #090e1c;
+      --bg-card: rgba(15, 23, 42, 0.9);
+      --border-subtle: rgba(255, 255, 255, 0.1);
+      --accent-cyan: #38bdf8;
+      --accent-emerald: #34d399;
+      --accent-purple: #a855f7;
+      --accent-amber: #fbbf24;
+      --accent-red: #f87171;
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --font-sans: 'Inter', sans-serif;
+      --font-heading: 'Outfit', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font-sans);
+      background: var(--bg-dark);
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header */
+    .video-header {
+      padding: 14px 28px;
+      background: rgba(15, 23, 42, 0.95);
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .video-header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .live-rec-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(239, 68, 68, 0.2);
+      border: 1px solid rgba(239, 68, 68, 0.5);
+      color: var(--accent-red);
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+    }
+
+    .rec-dot {
+      width: 8px;
+      height: 8px;
+      background: #ef4444;
+      border-radius: 50%;
+      animation: blink 1s infinite alternate;
+    }
+
+    @keyframes blink { from { opacity: 0.3; } to { opacity: 1; } }
+
+    /* Main Stage */
+    .video-stage-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      max-width: 1300px;
+      width: 100%;
+      margin: 20px auto;
+      padding: 0 20px;
+      gap: 16px;
+    }
+
+    /* Virtual Video Screen (16:9) */
+    .video-screen {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      overflow: hidden;
+      position: relative;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.7), 0 0 30px rgba(56, 189, 248, 0.15);
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Screen Slide Content */
+    .screen-scene {
+      flex: 1;
+      padding: 40px 48px;
+      display: none;
+      flex-direction: column;
+      justify-content: space-between;
+      animation: fadeIn 0.4s ease forwards;
+    }
+
+    .screen-scene.active {
+      display: flex;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.98); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    /* Overlay Captions Subtitles Bar */
+    .captions-overlay {
+      position: absolute;
+      bottom: 70px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(4, 7, 17, 0.88);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      padding: 10px 24px;
+      border-radius: 30px;
+      max-width: 85%;
+      text-align: center;
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: #f8fafc;
+      z-index: 100;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      transition: all 0.2s ease;
+    }
+
+    .captions-overlay span.highlight {
+      color: var(--accent-cyan);
+      font-weight: 700;
+    }
+
+    /* Custom Video Controls Bar */
+    .video-controls-bar {
+      background: rgba(15, 23, 42, 0.95);
+      border-top: 1px solid var(--border-subtle);
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      z-index: 110;
+    }
+
+    .btn-play-pause {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #0284c7 0%, #0d9488 100%);
+      border: none;
+      color: #ffffff;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.2s ease;
+      box-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
+    }
+    .btn-play-pause:hover { transform: scale(1.1); }
+
+    .timeline-progress-track {
+      flex: 1;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+      position: relative;
+      cursor: pointer;
+      overflow: hidden;
+    }
+
+    .timeline-progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #38bdf8 0%, #34d399 100%);
+      width: 0%;
+      transition: width 0.15s linear;
+    }
+
+    .time-display {
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      min-width: 90px;
+    }
+
+    .audio-toggle-btn {
+      background: transparent;
+      border: 1px solid var(--border-subtle);
+      color: var(--text-primary);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .audio-toggle-btn.active {
+      border-color: var(--accent-emerald);
+      color: var(--accent-emerald);
+    }
+
+    /* Chapter Bookmarks Sidebar/Bottom */
+    .chapter-selector {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 10px;
+    }
+
+    .chapter-btn {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 10px 12px;
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      transition: all 0.2s ease;
+    }
+
+    .chapter-btn:hover {
+      border-color: var(--accent-cyan);
+      transform: translateY(-2px);
+    }
+
+    .chapter-btn.active {
+      border-color: var(--accent-cyan);
+      background: rgba(56, 189, 248, 0.12);
+    }
+
+    .chapter-time {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--accent-cyan);
+    }
+
+    .chapter-title {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    /* Slide Elements */
+    .scene-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 20px;
+    }
+
+    .scene-title {
+      font-family: var(--font-heading);
+      font-size: 2.2rem;
+      font-weight: 800;
+      background: linear-gradient(90deg, #ffffff 0%, #38bdf8 60%, #34d399 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .scene-subtitle {
+      font-size: 1.05rem;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+
+    .scene-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin-top: 10px;
+    }
+
+    .scene-card {
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .scene-card h4 { font-size: 1.1rem; color: #ffffff; }
+    .scene-card p { font-size: 0.88rem; color: var(--text-secondary); line-height: 1.45; }
+
+    /* Animated Waveform Visualizer on Scene 2 */
+    .scene-wave-box {
+      background: rgba(4, 7, 17, 0.85);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      border-radius: 10px;
+      padding: 16px;
+      height: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="video-header">
+    <div class="video-header-left">
+      <span style="font-size: 22px;">🌐</span>
+      <h2 style="font-size: 1.1rem; font-family: var(--font-heading);">BRICS InfraPulse AI — Video Walkthrough & Narration Mode</h2>
+      <div class="live-rec-badge"><span class="rec-dot"></span> <span>AUTONOMOUS DEMO</span></div>
+    </div>
+    <div style="display: flex; gap: 10px;">
+      <a href="index.html" style="color: var(--text-secondary); text-decoration: none; padding: 6px 14px; border: 1px solid var(--border-subtle); border-radius: 6px; font-size: 0.85rem;">← Exit to Platform</a>
+      <a href="presentation.html" style="color: var(--accent-cyan); text-decoration: none; padding: 6px 14px; border: 1px solid rgba(56, 189, 248, 0.4); border-radius: 6px; font-size: 0.85rem;">📊 Presentation PDF</a>
+    </div>
+  </header>
+
+  <div class="video-stage-container">
+    <!-- Virtual Screen -->
+    <div class="video-screen" id="videoScreen">
+
+      <!-- SCENE 1: Introduction -->
+      <div class="screen-scene active" data-scene="0" data-duration="15">
+        <div class="scene-header">
+          <div>
+            <div style="color: var(--accent-cyan); font-weight: 700; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 0.08em; margin-bottom: 6px;">Chapter 1 • Strategic Problem & Vision</div>
+            <h1 class="scene-title">BRICS InfraPulse AI</h1>
+            <p class="scene-subtitle">Citizen-Aligned Sovereign Infrastructure Intelligence & Digital Public Good (DPG)</p>
+          </div>
+          <div style="font-size: 2.5rem;">🌍</div>
+        </div>
+
+        <div class="scene-grid">
+          <div class="scene-card">
+            <span style="font-size: 1.8rem;">🗣️</span>
+            <h4>Grassroots Citizen Voice</h4>
+            <p>Aggregating millions of unheard development petitions voiced in regional dialects across Brazil, Russia, India, China, and South Africa.</p>
+          </div>
+          <div class="scene-card">
+            <span style="font-size: 1.8rem;">💸</span>
+            <h4>Ending Fiscal Misalignment</h4>
+            <p>Preventing $1.2 Trillion in misallocated spending by matching citizen demand with demographic poverty data.</p>
+          </div>
+          <div class="scene-card">
+            <span style="font-size: 1.8rem;">🏛️</span>
+            <h4>New Development Bank Anchor</h4>
+            <p>Synthesizing grassroots petitions into bankable project charters eligible for sovereign green co-financing.</p>
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-muted); border-top: 1px solid var(--border-subtle); padding-top: 12px;">
+          <span>Target Population: 3.68 Billion Citizens</span>
+          <span>Open Digital Public Good Specification</span>
+        </div>
+      </div>
+
+      <!-- SCENE 2: Omnichannel Voice Ingestion -->
+      <div class="screen-scene" data-scene="1" data-duration="18">
+        <div class="scene-header">
+          <div>
+            <div style="color: var(--accent-cyan); font-weight: 700; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 0.08em; margin-bottom: 6px;">Chapter 2 • Omnichannel Ingestion Layer</div>
+            <h2 class="scene-title">Multilingual Voice & WhatsApp Triage</h2>
+            <p class="scene-subtitle">Listening in Bundelkhandi, Sertão Portuguese, Yakut Russian, Liangshan Mandarin, isiXhosa & Arabic</p>
+          </div>
+          <div style="font-size: 2.5rem;">🎙️</div>
+        </div>
+
+        <div class="scene-grid">
+          <div class="scene-card">
+            <h4>1. Web Speech Ingestion</h4>
+            <p>Real-time speech-to-text recording with 60fps audio waveform frequency visualizer.</p>
+            <div style="background: rgba(56,189,248,0.1); padding: 8px; border-radius: 6px; font-family: var(--font-mono); font-size: 0.78rem; color: var(--accent-cyan); margin-top: 6px;">
+              "हमारे गांव में सूखा पड़ा है, पानी का कुआं सूख चुका है..."
+            </div>
+          </div>
+
+          <div class="scene-card">
+            <h4>2. AI Dialect Normalization</h4>
+            <p>Classifies sector (Clean Water), computes Urgency (9.6/10), and generates standardized English translation.</p>
+            <div style="background: rgba(52,211,153,0.1); padding: 8px; border-radius: 6px; font-family: var(--font-mono); font-size: 0.78rem; color: var(--accent-emerald); margin-top: 6px;">
+              Sector: Clean Water • Urgency: 9.6/10
+            </div>
+          </div>
+
+          <div class="scene-card">
+            <h4>3. Zero-Knowledge Ticket</h4>
+            <p>Strips PII and issues tamper-evident Civic Ticket ID with spoken voice feedback in citizen's mother tongue.</p>
+            <div style="background: rgba(168,85,247,0.1); padding: 8px; border-radius: 6px; font-family: var(--font-mono); font-size: 0.78rem; color: var(--accent-purple); margin-top: 6px;">
+              Ticket: BRICS-IND-2026-1042
+            </div>
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-muted); border-top: 1px solid var(--border-subtle); padding-top: 12px;">
+          <span>Zero-Knowledge Privacy: IndiaStack / Pix / Mir Compatible</span>
+          <span>Real-Time Edge Translation</span>
+        </div>
+      </div>
+
+      <!-- SCENE 3: GIS Heatmap & Demographics -->
+      <div class="screen-scene" data-scene="2" data-duration="18">
+        <div class="scene-header">
+          <div>
+            <div style="color: var(--accent-cyan); font-weight: 700; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 0.08em; margin-bottom: 6px;">Chapter 3 • Geospatial Intelligence</div>
+            <h2 class="scene-title">GIS Heatmaps & Demographic Deficit Fusion</h2>
+            <p class="scene-subtitle">Correlating citizen demands with Multidimensional Poverty (MPI) and infrastructure deficits</p>
+          </div>
+          <div style="font-size: 2.5rem;">🗺️</div>
+        </div>
+
+        <div class="scene-grid">
+          <div class="scene-card">
+            <h4>🔥 Demand Heatmaps</h4>
+            <p>Dynamic kernel density estimation overlays citizen petitions weighted by severity and supporting community signatures.</p>
+          </div>
+
+          <div class="scene-card">
+            <h4>📊 Deficit Indices</h4>
+            <p>District-level tracking of Water Stress (92%), Grid Blackouts (68%), Unpaved Transit (74%), and Healthcare Distance (81%).</p>
+          </div>
+
+          <div class="scene-card">
+            <h4>⚖️ Equity Equalizer</h4>
+            <p>Prevents vocal urban centers from capturing all public funds over underserved rural and indigenous communities.</p>
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-muted); border-top: 1px solid var(--border-subtle); padding-top: 12px;">
+          <span>150+ Sovereign Districts Mapped Across BRICS</span>
+          <span>Leaflet.js GIS Engine</span>
+        </div>
+      </div>
+
+      <!-- SCENE 4: Explainable AI Prioritization -->
+      <div class="screen-scene" data-scene="3" data-duration="18">
+        <div class="scene-header">
+          <div>
+            <div style="color: var(--accent-cyan); font-weight: 700; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 0.08em; margin-bottom: 6px;">Chapter 4 • Decision Intelligence</div>
+            <h2 class="scene-title">Explainable AI (MCDA) Prioritization</h2>
+            <p class="scene-subtitle">Algorithmic project synthesis and bankable Project Charter generation</p>
+          </div>
+          <div style="font-size: 2.5rem;">⚡</div>
+        </div>
+
+        <div style="background: rgba(8,13,26,0.9); padding: 14px 20px; border-radius: 8px; border: 1px solid rgba(56,189,248,0.3); font-family: var(--font-mono); font-size: 0.88rem; color: var(--accent-cyan); text-align: center; margin-bottom: 12px;">
+          Priority Score = (30%·Demand + 25%·Poverty MPI + 20%·Deficit + 15%·Climate ESG + 10%·Social ROI)
+        </div>
+
+        <div class="scene-grid">
+          <div class="scene-card">
+            <h4 style="color: var(--accent-cyan);">Rank #1: Bundelkhand Solar Water</h4>
+            <p>Score: <strong>94.8/100</strong> • Direct Beneficiaries: <strong>2.87M Citizens</strong> • CapEx: <strong>$652M USD</strong> (NDB Tier 1 Green Concessional Loan).</p>
+          </div>
+          <div class="scene-card">
+            <h4 style="color: var(--accent-emerald);">Rank #2: Bahia Sertão Cisterns</h4>
+            <p>Score: <strong>92.1/100</strong> • Direct Beneficiaries: <strong>1.68M Citizens</strong> • CapEx: <strong>$562M USD</strong> (NDB Social Sustainability Facility).</p>
+          </div>
+          <div class="scene-card">
+            <h4 style="color: var(--accent-purple);">Rank #3: Eastern Cape Bridges</h4>
+            <p>Score: <strong>90.4/100</strong> • Direct Beneficiaries: <strong>525k Citizens</strong> • CapEx: <strong>$414M USD</strong> (Welisizwe Modular Infrastructure).</p>
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-muted); border-top: 1px solid var(--border-subtle); padding-top: 12px;">
+          <span>One-Click Export of NDB Project Investment Memorandums</span>
+          <span>Dynamic Sensitivity Weights</span>
+        </div>
+      </div>
+
+      <!-- SCENE 5: War-Room & Budget Allocator -->
+      <div class="screen-scene" data-scene="4" data-duration="18">
+        <div class="scene-header">
+          <div>
+            <div style="color: var(--accent-cyan); font-weight: 700; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 0.08em; margin-bottom: 6px;">Chapter 5 • Executive Governance</div>
+            <h2 class="scene-title">Policymaker War-Room & Budget Allocator</h2>
+            <p class="scene-subtitle">Ending wasteful spending with the Misalignment Matrix and GINI reduction simulation</p>
+          </div>
+          <div style="font-size: 2.5rem;">📊</div>
+        </div>
+
+        <div class="scene-grid">
+          <div class="scene-card">
+            <h4>Misalignment Matrix</h4>
+            <p>Scatter plot comparing current budget vs. true citizen deficit to flag <strong>$2.4B in misallocated spending</strong>.</p>
+          </div>
+          <div class="scene-card">
+            <h4>AI Auto-Rebalance</h4>
+            <p>Dynamically redistributes funds to clean water and healthcare, forecasting a <strong>-0.042 pts GINI reduction</strong>.</p>
+          </div>
+          <div class="scene-card">
+            <h4>Direct Citizen Reach</h4>
+            <p>Simulates reaching <strong>48.2 Million Citizens</strong> with <strong>94.2% public satisfaction index</strong>.</p>
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-muted); border-top: 1px solid var(--border-subtle); padding-top: 12px;">
+          <span>Real-Time Chart.js Visualizations</span>
+          <span>National Treasury Policy Decision Support</span>
+        </div>
+      </div>
+
+      <!-- SCENE 6: Conclusion & Impact -->
+      <div class="screen-scene" data-scene="5" data-duration="15">
+        <div class="scene-header">
+          <div>
+            <div style="color: var(--accent-cyan); font-weight: 700; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 0.08em; margin-bottom: 6px;">Chapter 6 • Strategic Impact</div>
+            <h2 class="scene-title">A Digital Public Good for 3.6+ Billion People</h2>
+            <p class="scene-subtitle">BRICS InfraPulse AI transforms citizen voice into sovereign public wealth.</p>
+          </div>
+          <div style="font-size: 2.5rem;">🚀</div>
+        </div>
+
+        <div class="scene-grid">
+          <div class="scene-card">
+            <h4>Closed-Loop Transparency</h4>
+            <p>Citizens track their petitions from intake to drone/satellite verification with full public auditability.</p>
+          </div>
+          <div class="scene-card">
+            <h4>Cross-BRICS DPI Hub</h4>
+            <p>Sharing frugal solutions like India's Jal Jeevan IoT and Brazil's Pix/Favela solar microgrids.</p>
+          </div>
+          <div class="scene-card">
+            <h4>$5B NDB Green Pipeline</h4>
+            <p>Co-financing high-impact climate resilient infrastructure across all member nations.</p>
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-muted); border-top: 1px solid var(--border-subtle); padding-top: 12px;">
+          <span>GitHub: github.com/amitkushwaha2311/BRICS</span>
+          <span>© 2026 BRICS Digital Public Infrastructure Alliance</span>
+        </div>
+      </div>
+
+      <!-- Captions Overlay -->
+      <div class="captions-overlay" id="captionsOverlay">
+        Welcome to <span class="highlight">BRICS InfraPulse AI</span> — an open Digital Public Good unifying citizen voice with sovereign infrastructure planning.
+      </div>
+
+      <!-- Video Controls -->
+      <div class="video-controls-bar">
+        <button class="btn-play-pause" id="btnPlayPause">▶</button>
+        <div class="timeline-progress-track" id="timelineTrack">
+          <div class="timeline-progress-fill" id="timelineFill"></div>
+        </div>
+        <div class="time-display" id="timeDisplay">00:00 / 01:42</div>
+        <button class="audio-toggle-btn active" id="audioToggleBtn">
+          <span>🔊</span> <span id="voiceStatusText">Voiceover Active</span>
+        </button>
+      </div>
+
+    </div>
+
+    <!-- Chapter Selector -->
+    <div class="chapter-selector">
+      <button class="chapter-btn active" data-chapter="0">
+        <span class="chapter-time">00:00</span>
+        <span class="chapter-title">1. Introduction & Vision</span>
+      </button>
+      <button class="chapter-btn" data-chapter="1">
+        <span class="chapter-time">00:15</span>
+        <span class="chapter-title">2. Voice Ingestion & NLP</span>
+      </button>
+      <button class="chapter-btn" data-chapter="2">
+        <span class="chapter-time">00:33</span>
+        <span class="chapter-title">3. GIS Deficit Heatmaps</span>
+      </button>
+      <button class="chapter-btn" data-chapter="3">
+        <span class="chapter-time">00:51</span>
+        <span class="chapter-title">4. Explainable AI Prioritizer</span>
+      </button>
+      <button class="chapter-btn" data-chapter="4">
+        <span class="chapter-time">01:09</span>
+        <span class="chapter-title">5. War-Room Budget Sim</span>
+      </button>
+      <button class="chapter-btn" data-chapter="5">
+        <span class="chapter-time">01:27</span>
+        <span class="chapter-title">6. Closed-Loop & NDB</span>
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // Chapter Narrations Script
+    const CHAPTER_DATA = [
+      {
+        sceneIdx: 0,
+        startTime: 0,
+        duration: 15,
+        title: "Introduction & Vision",
+        narration: "Welcome to BRICS InfraPulse AI. Across developing nations, over one point two trillion dollars in public spending fails to align with true grassroots citizen needs. InfraPulse AI is a Digital Public Good that bridges this divide.",
+        caption: "Welcome to <strong>BRICS InfraPulse AI</strong> — aggregating citizen voice into bankable public investments across 3.68 Billion people."
+      },
+      {
+        sceneIdx: 1,
+        startTime: 15,
+        duration: 18,
+        title: "Voice Ingestion & NLP",
+        narration: "Our multilingual studio ingests voice notes and messages in regional dialects including Bundelkhandi, Sertão Portuguese, and Yakut Russian, instantly classifying sectors and issuing zero-knowledge Civic Tickets.",
+        caption: "<strong>Omnichannel Voice Studio:</strong> Ingests regional dialects with real-time NLP entity extraction and spoken feedback."
+      },
+      {
+        sceneIdx: 2,
+        startTime: 33,
+        duration: 18,
+        title: "GIS Deficit Heatmaps",
+        narration: "Next, our GIS engine combines citizen grievance heatmaps with national demographic data and Multidimensional Poverty indices, ensuring remote and underserved communities are never overlooked.",
+        caption: "<strong>Geospatial GIS Engine:</strong> Cross-referencing citizen demand with Multidimensional Poverty Index (MPI) and water stress layers."
+      },
+      {
+        sceneIdx: 3,
+        startTime: 51,
+        duration: 18,
+        title: "Explainable AI Prioritizer",
+        narration: "The Explainable AI Decision Engine scores every potential project across five transparent criteria, synthesizing ready-to-fund bankable project charters aligned with New Development Bank standards.",
+        caption: "<strong>Explainable AI (MCDA):</strong> Dynamically balances Citizen Urgency (30%), Poverty (25%), Deficit Severity (20%), and Climate ESG (15%)."
+      },
+      {
+        sceneIdx: 4,
+        startTime: 69,
+        duration: 18,
+        title: "War-Room Budget Sim",
+        narration: "In the Policymaker War-Room, finance ministers identify misallocated capital and simulate budget shifts with real-time projections of regional GINI disparity reduction.",
+        caption: "<strong>Policymaker War-Room:</strong> Misalignment matrix flags wasteful spend, while the simulator projects a -0.042 pts GINI reduction."
+      },
+      {
+        sceneIdx: 5,
+        startTime: 87,
+        duration: 15,
+        title: "Closed-Loop & NDB",
+        narration: "Finally, citizens track verified milestones from tender to drone inspection, creating a fully transparent, participatory Digital Public Good for all BRICS plus member nations.",
+        caption: "<strong>Closed-Loop DPI:</strong> Full citizen auditability from initial voice petition to real-world infrastructure commissioning."
+      }
+    ];
+
+    const TOTAL_DURATION = 102; // seconds
+    let currentTime = 0;
+    let isPlaying = false;
+    let voiceEnabled = true;
+    let timerInterval = null;
+
+    const playBtn = document.getElementById('btnPlayPause');
+    const timeDisplay = document.getElementById('timeDisplay');
+    const timelineFill = document.getElementById('timelineFill');
+    const captionsEl = document.getElementById('captionsOverlay');
+    const audioBtn = document.getElementById('audioToggleBtn');
+    const scenes = document.querySelectorAll('.screen-scene');
+    const chapterBtns = document.querySelectorAll('.chapter-btn');
+
+    function formatTime(secs) {
+      const m = Math.floor(secs / 60).toString().padStart(2, '0');
+      const s = Math.floor(secs % 60).toString().padStart(2, '0');
+      return `${m}:${s}`;
+    }
+
+    function updateUI() {
+      timeDisplay.innerText = `${formatTime(currentTime)} / ${formatTime(TOTAL_DURATION)}`;
+      const pct = (currentTime / TOTAL_DURATION) * 100;
+      timelineFill.style.width = `${pct}%`;
+
+      // Determine active chapter
+      let activeChap = CHAPTER_DATA[0];
+      for (let i = CHAPTER_DATA.length - 1; i >= 0; i--) {
+        if (currentTime >= CHAPTER_DATA[i].startTime) {
+          activeChap = CHAPTER_DATA[i];
+          break;
+        }
+      }
+
+      // Switch active scene
+      scenes.forEach(s => {
+        if (parseInt(s.getAttribute('data-scene'), 10) === activeChap.sceneIdx) {
+          s.classList.add('active');
+        } else {
+          s.classList.remove('active');
+        }
+      });
+
+      // Switch active chapter button
+      chapterBtns.forEach(btn => {
+        if (parseInt(btn.getAttribute('data-chapter'), 10) === activeChap.sceneIdx) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+
+      // Update captions
+      captionsEl.innerHTML = activeChap.caption;
+    }
+
+    function speakNarration(text) {
+      if (!voiceEnabled || !('speechSynthesis' in window)) return;
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 1.05;
+      utterance.pitch = 1.0;
+      window.speechSynthesis.speak(utterance);
+    }
+
+    function startPlayback() {
+      isPlaying = true;
+      playBtn.innerText = '⏸';
+      
+      const currentChap = CHAPTER_DATA.find(c => currentTime >= c.startTime && currentTime < c.startTime + c.duration) || CHAPTER_DATA[0];
+      speakNarration(currentChap.narration);
+
+      timerInterval = setInterval(() => {
+        currentTime++;
+        if (currentTime >= TOTAL_DURATION) {
+          pausePlayback();
+          currentTime = 0;
+        } else {
+          // Check if entering a new chapter
+          const matchingChap = CHAPTER_DATA.find(c => c.startTime === currentTime);
+          if (matchingChap) {
+            speakNarration(matchingChap.narration);
+          }
+        }
+        updateUI();
+      }, 1000);
+    }
+
+    function pausePlayback() {
+      isPlaying = false;
+      playBtn.innerText = '▶';
+      if (timerInterval) clearInterval(timerInterval);
+      if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+    }
+
+    playBtn.addEventListener('click', () => {
+      if (isPlaying) pausePlayback();
+      else startPlayback();
+    });
+
+    audioBtn.addEventListener('click', () => {
+      voiceEnabled = !voiceEnabled;
+      audioBtn.classList.toggle('active', voiceEnabled);
+      document.getElementById('voiceStatusText').innerText = voiceEnabled ? 'Voiceover Active' : 'Voiceover Muted';
+      if (!voiceEnabled && 'speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+    });
+
+    chapterBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const cIdx = parseInt(btn.getAttribute('data-chapter'), 10);
+        const targetChap = CHAPTER_DATA[cIdx];
+        if (targetChap) {
+          currentTime = targetChap.startTime;
+          updateUI();
+          if (isPlaying) {
+            speakNarration(targetChap.narration);
+          }
+        }
+      });
+    });
+
+    document.getElementById('timelineTrack').addEventListener('click', (e) => {
+      const rect = e.currentTarget.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const ratio = clickX / rect.width;
+      currentTime = Math.floor(ratio * TOTAL_DURATION);
+      updateUI();
+      if (isPlaying) {
+        const currentChap = CHAPTER_DATA.find(c => currentTime >= c.startTime && currentTime < c.startTime + c.duration) || CHAPTER_DATA[0];
+        speakNarration(currentChap.narration);
+      }
+    });
+
+    // Initial update
+    updateUI();
+  </script>
+</body>
+</html>
