@@ -1,0 +1,21 @@
+{
+  "name": "brics-infrapulse-ai",
+  "version": "1.0.0",
+  "description": "Multilingual Citizen-Aligned Infrastructure Intelligence Platform & Digital Public Good for BRICS+ Nations",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "brics",
+    "digital-public-good",
+    "digital-public-infrastructure",
+    "ai-prioritization",
+    "multilingual-nlp",
+    "gis-mapping",
+    "infrastructure-intelligence"
+  ],
+  "author": "BRICS Digital Public Infrastructure Alliance",
+  "license": "Apache-2.0"
+}

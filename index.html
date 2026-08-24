@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BRICS InfraPulse AI — Citizen-Aligned Infrastructure Intelligence Platform</title>
+  <meta name="description" content="A scalable, multilingual Digital Public Good aggregating citizen development requests across BRICS+ nations with GIS deficit heatmaps and explainable AI project prioritization.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌐</text></svg>">
+
+  <!-- External Libraries (Leaflet & Chart.js) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Core Stylesheets -->
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/map.css">
+  <link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+  <div id="appRoot">
+    <!-- Top Header -->
+    <header class="app-header">
+      <div class="brand-section">
+        <div class="brand-logo">🌐</div>
+        <div class="brand-meta">
+          <h1 id="appHeaderTitle">BRICS InfraPulse AI</h1>
+          <p id="appHeaderSubtitle">Citizen-Aligned Infrastructure Intelligence Platform & Digital Public Good (DPG)</p>
+        </div>
+      </div>
+
+      <div class="header-controls">
+        <div class="telemetry-pill">
+          <span class="dot-live"></span>
+          <span>DPI Telemetry Online</span>
+        </div>
+
+        <!-- Global Country Selector -->
+        <select class="country-select-dropdown" id="globalCountrySelect" aria-label="Select BRICS Country">
+          <!-- Populated by JavaScript -->
+        </select>
+
+        <!-- Presentation Deck Link -->
+        <a href="presentation.html" target="_blank" class="btn btn-xs btn-outline" style="border-color: rgba(56,189,248,0.4); color: var(--accent-cyan); text-decoration: none; padding: 6px 12px;">
+          <span>📊</span> <span>Deck (PDF)</span>
+        </a>
+
+        <!-- Global Language Selector -->
+        <select class="lang-select-dropdown" id="globalLanguageSelect" aria-label="Select Language">
+          <option value="en">🌐 English (Global DPI)</option>
+          <option value="hi">🇮🇳 हिन्दी (Hindi)</option>
+          <option value="zh">🇨🇳 中文 (Mandarin)</option>
+          <option value="ru">🇷🇺 Русский (Russian)</option>
+          <option value="pt">🇧🇷 Português (Portuguese)</option>
+          <option value="ar">🇦🇪/🇪🇬 العربية (Arabic)</option>
+        </select>
+      </div>
+    </header>
+
+    <!-- Global Navigation Tabs -->
+    <nav class="main-nav-ribbon" role="tablist">
+      <button class="nav-tab-btn active" data-tab="map" role="tab" id="tabBtnMap">
+        <span>🗺️</span> <span id="navTextMap">National GIS Heatmap</span>
+      </button>
+      <button class="nav-tab-btn" data-tab="ingestion" role="tab" id="tabBtnIngestion">
+        <span>🎙️</span> <span id="navTextIngestion">Citizen Voice & Chatbot</span>
+      </button>
+      <button class="nav-tab-btn" data-tab="prioritization" role="tab" id="tabBtnPrioritization">
+        <span>⚡</span> <span id="navTextPrioritization">AI Project Prioritization</span>
+      </button>
+      <button class="nav-tab-btn" data-tab="warroom" role="tab" id="tabBtnWarRoom">
+        <span>📊</span> <span id="navTextWarRoom">Policymaker War-Room & Budget</span>
+      </button>
+      <button class="nav-tab-btn" data-tab="tracker" role="tab" id="tabBtnTracker">
+        <span>🔍</span> <span id="navTextTracker">Citizen Ticket Tracker</span>
+      </button>
+      <button class="nav-tab-btn" data-tab="knowledge" role="tab" id="tabBtnKnowledge">
+        <span>🏛️</span> <span id="navTextKnowledge">Cross-BRICS DPI Hub</span>
+      </button>
+    </nav>
+
+    <!-- Secondary Filter Bar -->
+    <section class="filter-bar">
+      <div class="filter-left">
+        <strong class="highlight-cyan" id="currentCountryBanner">🌍 All BRICS+ Nations - Sovereign Infrastructure Overview</strong>
+      </div>
+      <div class="filter-right">
+        <label for="globalSectorFilter" class="text-muted">Sector:</label>
+        <select class="filter-select" id="globalSectorFilter">
+          <option value="ALL">All Infrastructure Sectors</option>
+          <option value="Clean Water & Sanitation">💧 Clean Water & Sanitation</option>
+          <option value="Renewable Grid & Power">⚡ Renewable Grid & Power</option>
+          <option value="Rural Roadways & Freight">🌉 Rural Roadways & Freight</option>
+          <option value="Healthcare Clinics">🏥 Healthcare Clinics</option>
+          <option value="Digital Public Infra (Broadband)">📶 Digital Public Infra</option>
+          <option value="Agro-Logistics & Cold Chains">🍎 Agro-Logistics & Storage</option>
+        </select>
+
+        <label for="globalUrgencyFilter" class="text-muted">Min Urgency:</label>
+        <input type="range" id="globalUrgencyFilter" min="0" max="9.5" step="0.5" value="0" style="width: 80px; accent-color: var(--accent-cyan);">
+        <span id="globalUrgencyVal" class="highlight-amber" style="font-weight: 700; min-width: 40px;">All</span>
+      </div>
+    </section>
+
+    <!-- Main Dynamic Tab Panes -->
+    <main class="main-content-container">
+      <!-- 1. GIS Map Tab -->
+      <section id="tab-map" class="tab-pane active" role="tabpanel">
+        <div id="gisMapModuleContainer"></div>
+      </section>
+
+      <!-- 2. Multilingual Citizen Ingestion Tab -->
+      <section id="tab-ingestion" class="tab-pane" role="tabpanel">
+        <div class="ingestion-dual-grid" style="display: flex; flex-direction: column; gap: 24px;">
+          <div id="voiceStudioModuleContainer"></div>
+          <div id="chatSimulatorModuleContainer"></div>
+        </div>
+      </section>
+
+      <!-- 3. AI MCDA Prioritization Tab -->
+      <section id="tab-prioritization" class="tab-pane" role="tabpanel">
+        <div id="aiScoringModuleContainer"></div>
+      </section>
+
+      <!-- 4. Policymaker War-Room & Budget Simulator Tab -->
+      <section id="tab-warroom" class="tab-pane" role="tabpanel">
+        <div id="warRoomModuleContainer"></div>
+      </section>
+
+      <!-- 5. Citizen Ticket Tracker Tab -->
+      <section id="tab-tracker" class="tab-pane" role="tabpanel">
+        <div id="citizenTrackerModuleContainer"></div>
+      </section>
+
+      <!-- 6. Cross-BRICS Knowledge Hub Tab -->
+      <section id="tab-knowledge" class="tab-pane" role="tabpanel">
+        <div id="knowledgeHubModuleContainer"></div>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer style="padding: 20px 28px; background: rgba(8, 13, 26, 0.95); border-top: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: space-between; font-size: 0.8rem; color: var(--text-muted); margin-top: auto;">
+      <div>
+        <span>🌐 <strong>BRICS InfraPulse AI</strong> — Digital Public Good (DPG) Specification v2.4</span>
+        <span style="margin-left: 12px; color: var(--accent-emerald);">• Compatible with IndiaStack, Pix, Mir, e-CNY, Fayda & NDB Green Finance</span>
+      </div>
+      <div>
+        <span>© 2026 BRICS Digital Public Infrastructure Strategic Alliance</span>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Main JavaScript App -->
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

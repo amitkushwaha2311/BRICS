@@ -1,0 +1,349 @@
+/**
+ * BRICS InfraPulse AI - Geospatial GIS Map Styling
+ * Custom Leaflet controls, pulsating radar pins, dark theme popups, and floating legends.
+ */
+
+.gis-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 210px);
+  min-height: 600px;
+  background: #080d1a;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-subtle);
+  overflow: hidden;
+  position: relative;
+}
+
+.gis-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  background: rgba(15, 23, 42, 0.95);
+  border-bottom: 1px solid var(--border-subtle);
+  z-index: 10;
+}
+
+.layer-control-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.toolbar-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  margin-right: 6px;
+}
+
+.layer-toggle-btn {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: var(--transition-fast);
+}
+
+.layer-toggle-btn:hover {
+  border-color: var(--accent-cyan);
+  color: #ffffff;
+}
+
+.layer-toggle-btn.active {
+  background: rgba(56, 189, 248, 0.15);
+  border-color: var(--accent-cyan);
+  color: var(--accent-cyan);
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.25);
+}
+
+.map-stats-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(8, 13, 26, 0.8);
+  border: 1px solid var(--border-subtle);
+  padding: 5px 14px;
+  border-radius: var(--radius-full);
+  font-size: 0.78rem;
+  color: var(--text-primary);
+}
+
+.leaflet-map-view {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  background: #080d1a;
+  z-index: 1;
+}
+
+/* Floating GIS Map Legend */
+.gis-floating-legend {
+  position: absolute;
+  bottom: 24px;
+  right: 24px;
+  background: rgba(15, 23, 42, 0.9);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 14px 18px;
+  z-index: 500;
+  max-width: 320px;
+  box-shadow: var(--shadow-lg);
+}
+
+.legend-title {
+  font-size: 0.82rem;
+  margin-bottom: 8px;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legend-scale-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.scale-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.scale-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+.scale-color.red { background: #ef4444; box-shadow: 0 0 8px rgba(239, 68, 68, 0.6); }
+.scale-color.amber { background: #f59e0b; box-shadow: 0 0 8px rgba(245, 158, 11, 0.6); }
+.scale-color.blue { background: #38bdf8; box-shadow: 0 0 8px rgba(56, 189, 248, 0.6); }
+
+.legend-ndb-note {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-subtle);
+  font-size: 0.72rem;
+  line-height: 1.35;
+  color: var(--text-muted);
+}
+
+/* Pulsing Custom Pin */
+.custom-gis-pin-wrapper {
+  background: transparent;
+  border: none;
+}
+
+.gis-pulse-pin {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.gis-pulse-pin:hover {
+  transform: scale(1.25);
+  z-index: 100;
+}
+
+.pin-icon {
+  font-size: 16px;
+  z-index: 2;
+}
+
+.pin-radar {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  border-radius: 50%;
+  animation: radarPulse 2s infinite ease-out;
+  z-index: 1;
+}
+
+.marker-critical {
+  background: rgba(239, 68, 68, 0.85);
+  border: 2px solid #ffffff;
+  box-shadow: 0 0 15px rgba(239, 68, 68, 0.8);
+}
+.marker-critical .pin-radar {
+  border: 2px solid #ef4444;
+}
+
+.marker-high {
+  background: rgba(245, 158, 11, 0.85);
+  border: 2px solid #ffffff;
+  box-shadow: 0 0 15px rgba(245, 158, 11, 0.8);
+}
+.marker-high .pin-radar {
+  border: 2px solid #f59e0b;
+}
+
+.marker-moderate {
+  background: rgba(56, 189, 248, 0.85);
+  border: 2px solid #ffffff;
+  box-shadow: 0 0 15px rgba(56, 189, 248, 0.8);
+}
+.marker-moderate .pin-radar {
+  border: 2px solid #38bdf8;
+}
+
+@keyframes radarPulse {
+  0% { transform: scale(1); opacity: 0.8; }
+  100% { transform: scale(2.6); opacity: 0; }
+}
+
+/* Custom Leaflet Popups */
+.dark-leaflet-popup .leaflet-popup-content-wrapper {
+  background: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(14px);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-lg);
+  padding: 0;
+}
+
+.dark-leaflet-popup .leaflet-popup-content {
+  margin: 16px 18px;
+  line-height: 1.4;
+}
+
+.dark-leaflet-popup .leaflet-popup-tip {
+  background: #0f172a;
+}
+
+.custom-gis-popup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.popup-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ticket-tag {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--accent-cyan);
+}
+
+.popup-title {
+  font-size: 1.05rem;
+  color: #ffffff;
+}
+
+.popup-tag-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.badge-sector {
+  background: rgba(56, 189, 248, 0.15);
+  color: var(--accent-cyan);
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.badge-urgency {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--accent-red);
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.popup-speech-box {
+  background: rgba(8, 13, 26, 0.8);
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.speech-lang {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.speech-quote {
+  font-style: italic;
+  color: var(--text-secondary);
+}
+
+.speech-trans {
+  font-size: 0.78rem;
+  color: var(--accent-emerald);
+}
+
+.popup-meta-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  padding-top: 6px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.popup-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.p-card {
+  background: rgba(8, 13, 26, 0.8);
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  flex-direction: column;
+}
+.p-card .lbl { font-size: 0.65rem; color: var(--text-muted); }
+.p-card .val { font-size: 0.85rem; font-weight: 700; }
+
+.sector-bars-box {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  background: rgba(8, 13, 26, 0.6);
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 0.72rem;
+}
+
+.bar-row {
+  display: flex;
+  justify-content: space-between;
+}
+
+.ndb-tag {
+  font-size: 0.72rem;
+  color: var(--accent-purple);
+}
