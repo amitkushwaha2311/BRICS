@@ -324,8 +324,11 @@
       <h2 style="font-size: 1.1rem; font-family: var(--font-heading);">BRICS InfraPulse AI — Video Walkthrough & Narration Mode</h2>
       <div class="live-rec-badge"><span class="rec-dot"></span> <span>AUTONOMOUS DEMO</span></div>
     </div>
-    <div style="display: flex; gap: 10px;">
-      <a href="index.html" style="color: var(--text-secondary); text-decoration: none; padding: 6px 14px; border: 1px solid var(--border-subtle); border-radius: 6px; font-size: 0.85rem;">← Exit to Platform</a>
+    <div style="display: flex; gap: 10px; align-items: center;">
+      <button id="btnExportVideo" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: #ffffff; border: none; padding: 7px 16px; border-radius: 6px; font-size: 0.85rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);">
+        <span>📹</span> <span>Record & Export for YouTube</span>
+      </button>
+      <a href="index.html" style="color: var(--text-secondary); text-decoration: none; padding: 6px 14px; border: 1px solid var(--border-subtle); border-radius: 6px; font-size: 0.85rem;">← Platform</a>
       <a href="presentation.html" style="color: var(--accent-cyan); text-decoration: none; padding: 6px 14px; border: 1px solid rgba(56, 189, 248, 0.4); border-radius: 6px; font-size: 0.85rem;">📊 Presentation PDF</a>
     </div>
   </header>
@@ -779,6 +782,70 @@
       if (isPlaying) {
         const currentChap = CHAPTER_DATA.find(c => currentTime >= c.startTime && currentTime < c.startTime + c.duration) || CHAPTER_DATA[0];
         speakNarration(currentChap.narration);
+      }
+    });
+
+    // Export Video Recording for YouTube
+    const exportBtn = document.getElementById('btnExportVideo');
+    let mediaRecorder = null;
+    let recordedChunks = [];
+
+    exportBtn.addEventListener('click', async () => {
+      try {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
+          alert('Screen capture API is not available on this browser. You can record using OBS, Loom, or Windows Game Bar (Win + Alt + R).');
+          return;
+        }
+
+        const stream = await navigator.mediaDevices.getDisplayMedia({
+          video: { frameRate: 60, width: 1920, height: 1080 },
+          audio: true
+        });
+
+        recordedChunks = [];
+        mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm; codecs=vp9' });
+
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data.size > 0) {
+            recordedChunks.push(event.data);
+          }
+        };
+
+        mediaRecorder.onstop = () => {
+          const blob = new Blob(recordedChunks, { type: 'video/webm' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.style.display = 'none';
+          a.href = url;
+          a.download = 'BRICS_InfraPulse_AI_YouTube_Demo.webm';
+          document.body.appendChild(a);
+          a.click();
+          setTimeout(() => {
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+          }, 100);
+          exportBtn.innerHTML = '<span>📹</span> <span>Record & Export for YouTube</span>';
+          exportBtn.style.background = 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
+        };
+
+        mediaRecorder.start();
+        exportBtn.innerHTML = '<span>⏹️</span> <span>Recording Live (Click to Stop & Save)</span>';
+        exportBtn.style.background = 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)';
+
+        // Auto restart video from start
+        currentTime = 0;
+        updateUI();
+        startPlayback();
+
+        // Handle user stopping screen share from browser banner
+        stream.getVideoTracks()[0].onended = () => {
+          if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+            mediaRecorder.stop();
+          }
+        };
+
+      } catch (err) {
+        console.warn('Screen recording cancelled or failed:', err);
       }
     });
 
